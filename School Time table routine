@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>School Teacher Timetable</title>
+  <style>
+    :root {
+      --primary-color: #2563eb;
+      --bg-color: #f8fafc;
+      --card-bg: #ffffff;
+      --text-color: #1e293b;
+      --break-bg: #fef3c7;
+      --break-text: #92400e;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 16px;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .controls-card {
+      background: var(--card-bg);
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      margin-bottom: 16px;
+    }
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #64748b;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      font-size: 1rem;
+      background-color: #fff;
+      color: var(--text-color);
+      outline: none;
+      margin-bottom: 12px;
+    }
+
+    .header-card {
+      background: var(--card-bg);
+      padding: 16px 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      margin-bottom: 16px;
+    }
+
+    .header-card h2 {
+      margin: 0 0 6px 0;
+      font-size: 1.3rem;
+      color: var(--primary-color);
+    }
+
+    .meta-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    .badge {
+      background: #e0e7ff;
+      color: #3730a3;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+    }
+
+    .schedule-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .period-card {
+      background: var(--card-bg);
+      padding: 14px 16px;
+      border-radius: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      border-left: 4px solid var(--primary-color);
+    }
+
+    .period-card.break {
+      background: var(--break-bg);
+      border-left-color: #f59e0b;
+      color: var(--break-text);
+    }
+
+    .period-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .period-time {
+      font-weight: 500;
+      font-size: 0.85rem;
+      color: #475569;
+    }
+
+    .break .period-time {
+      color: var(--break-text);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="controls-card">
+      <label for="teacher-select">Select Teacher:</label>
+      <select id="teacher-select" onchange="loadTimetable()">
+        <!-- Options generated dynamically -->
+      </select>
+    </div>
+
+    <div class="header-card">
+      <h2 id="teacher-name">-</h2>
+      <div class="meta-info">
+        <span>Subject: <strong id="teacher-subject">-</strong></span>
+        <span class="badge" id="teacher-shift">-</span>
+      </div>
+    </div>
+
+    <div class="schedule-list" id="schedule-container"></div>
+  </div>
+
+  <script>
+    // Database of multiple teachers
+    const teachersData = [
+      {
+        id: "ali-aman",
+        name: "Ali Aman Shah",
+        subject: "English",
+        shift: "Evening",
+        schedule: [
+          { period: "1st Period", time: "1:00 PM – 1:40 PM", isBreak: false },
+          { period: "2nd Period", time: "1:40 PM – 2:15 PM", isBreak: false },
+          { period: "Break Time (Boys & Girls)", time: "2:15 PM – 2:45 PM", isBreak: true },
+          { period: "3rd Period", time: "2:45 PM – 3:20 PM", isBreak: false },
+          { period: "4th Period", time: "3:20 PM – 3:50 PM", isBreak: false },
+          { period: "5th Period", time: "3:50 PM – 4:20 PM", isBreak: false },
+          { period: "6th Period", time: "4:20 PM – 4:50 PM", isBreak: false },
+          { period: "7th Period", time: "4:50 PM – 5:30 PM", isBreak: false }
+        ]
+      },
+      {
+        id: "sample-teacher-2",
+        name: "Sara Khan",
+        subject: "Mathematics",
+        shift: "Morning",
+        schedule: [
+          { period: "1st Period", time: "8:00 AM – 8:40 AM", isBreak: false },
+          { period: "2nd Period", time: "8:40 AM – 9:20 AM", isBreak: false },
+          { period: "Break Time", time: "9:20 AM – 9:50 AM", isBreak: true },
+          { period: "3rd Period", time: "9:50 AM – 10:30 AM", isBreak: false },
+          { period: "4th Period", time: "10:30 AM – 11:10 AM", isBreak: false }
+        ]
+      }
+    ];
+
+    const selectEl = document.getElementById("teacher-select");
+
+    // Populate dropdown with options
+    teachersData.forEach((teacher, index) => {
+      const option = document.createElement("option");
+      option.value = index;
+      option.textContent = `${teacher.name} (${teacher.subject})`;
+      selectEl.appendChild(option);
+    });
+
+    function loadTimetable() {
+      const selectedIndex = selectEl.value;
+      const teacher = teachersData[selectedIndex];
+
+      document.getElementById("teacher-name").textContent = teacher.name;
+      document.getElementById("teacher-subject").textContent = teacher.subject;
+      document.getElementById("teacher-shift").textContent = `${teacher.shift} Shift`;
+
+      const container = document.getElementById("schedule-container");
+      container.innerHTML = "";
+
+      teacher.schedule.forEach(item => {
+        const card = document.createElement("div");
+        card.className = `period-card ${item.isBreak ? 'break' : ''}`;
+        card.innerHTML = `
+          <div class="period-title">${item.period}</div>
+          <div class="period-time">${item.time}</div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Load initial teacher
+    loadTimetable();
+  </script>
+</body>
+</html>
